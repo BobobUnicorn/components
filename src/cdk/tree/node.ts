@@ -36,6 +36,13 @@ export class CdkTreeNodeOutletContext<T> {
   inputs: ['when: cdkTreeNodeDefWhen'],
 })
 export class CdkTreeNodeDef<T> {
+  static ngTemplateContextGuard<T>(
+    _dir: CdkTreeNodeDef<T>,
+    _ctx: unknown,
+  ): _ctx is CdkTreeNodeOutletContext<T> {
+    return true;
+  }
+
   /**
    * Function that should return true if this node template should be used for the provided node
    * data and index. If left undefined, this node will be considered the default node template to
