@@ -556,6 +556,7 @@ export class CdkTree<T, K = T> implements AfterContentChecked, CollectionViewer,
     return this.treeControl?.getChildren ?? this.childrenAccessor;
   }
 
+<<<<<<< HEAD
   /**
    * Gets the direct children of a node; used for compatibility between the old tree and the
    * new tree.
@@ -629,6 +630,16 @@ export class CdkTree<T, K = T> implements AfterContentChecked, CollectionViewer,
 
   _getLevel(node: T) {
     return this._levels.get(node);
+  }
+
+  _getPositionInSet(dataNode: T) {
+    const group = this._getNodeGroup(dataNode);
+    return group.indexOf(dataNode) + 1;
+  }
+
+  _getSetSize(dataNode: T) {
+    const group = this._getNodeGroup(dataNode);
+    return group.length;
   }
 
   private _getAllDescendants(): Observable<T[]> {
@@ -833,11 +844,11 @@ export class CdkTreeNode<T, K = T> implements FocusableOption, OnDestroy, OnInit
   }
 
   _getSetSize(): number {
-    return 0;
+    return this._tree._getSetSize(this._data);
   }
 
   _getPositionInSet(): number {
-    return 0;
+    return this._tree._getPositionInSet(this._data);
   }
 
   constructor(protected _elementRef: ElementRef<HTMLElement>, protected _tree: CdkTree<T, K>) {
