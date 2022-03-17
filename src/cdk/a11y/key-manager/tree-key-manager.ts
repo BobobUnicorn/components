@@ -329,11 +329,11 @@ export class TreeKeyManager<T extends TreeKeyManagerItem> {
       return;
     }
 
-    if (!this._isCurrentItemExpanded()) {
+    if (this._isCurrentItemExpanded()) {
       this._activeItem.collapse();
     } else {
       const parent = this._activeItem.getParent();
-      if (!parent) {
+      if (!parent || this._isItemDisabled(parent)) {
         return;
       }
       this._setActiveItem(parent as T);
@@ -354,7 +354,7 @@ export class TreeKeyManager<T extends TreeKeyManagerItem> {
       coerceObservable(this._activeItem.getChildren())
         .pipe(take(1))
         .subscribe(children => {
-          const firstChild = children[0];
+          const firstChild = children.find(child => !this._isItemDisabled(child));
           if (!firstChild) {
             return;
           }
@@ -372,7 +372,7 @@ export class TreeKeyManager<T extends TreeKeyManagerItem> {
       : this._activeItem.isExpanded();
   }
 
-  private _isItemDisabled(item: T) {
+  private _isItemDisabled(item: TreeKeyManagerItem) {
     return typeof item.isDisabled === 'boolean' ? item.isDisabled : item.isDisabled?.();
   }
 
