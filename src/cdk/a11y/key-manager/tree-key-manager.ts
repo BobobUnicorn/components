@@ -120,8 +120,7 @@ export class TreeKeyManager<T extends TreeKeyManagerItem> {
    * Predicate function that can be used to check whether an item should be skipped
    * by the key manager. By default, disabled items are skipped.
    */
-  private _skipPredicateFn = (item: T) =>
-    typeof item.isDisabled === 'boolean' ? item.isDisabled : !!item.isDisabled?.();
+  private _skipPredicateFn = (item: T) => this._isItemDisabled(item);
 
   /** Function to determine equivalent items. */
   private _trackByFn: (item: T) => unknown = (item: T) => item;
@@ -313,7 +312,7 @@ export class TreeKeyManager<T extends TreeKeyManagerItem> {
 
   private _findNextAvailableItemIndex(startingIndex: number) {
     for (let i = startingIndex + 1; i < this._items.length; i++) {
-      if (!this._isItemDisabled(this._items[i])) {
+      if (!this._skipPredicateFn(this._items[i])) {
         return i;
       }
     }
@@ -322,7 +321,7 @@ export class TreeKeyManager<T extends TreeKeyManagerItem> {
 
   private _findPreviousAvailableItemIndex(startingIndex: number) {
     for (let i = startingIndex - 1; i >= 0; i--) {
-      if (!this._isItemDisabled(this._items[i])) {
+      if (!this._skipPredicateFn(this._items[i])) {
         return i;
       }
     }
@@ -341,7 +340,7 @@ export class TreeKeyManager<T extends TreeKeyManagerItem> {
       this._activeItem.collapse();
     } else {
       const parent = this._activeItem.getParent();
-      if (!parent || this._isItemDisabled(parent)) {
+      if (!parent || this._skipPredicateFn(parent as T)) {
         return;
       }
       this._setActiveItem(parent as T);
@@ -362,7 +361,7 @@ export class TreeKeyManager<T extends TreeKeyManagerItem> {
       coerceObservable(this._activeItem.getChildren())
         .pipe(take(1))
         .subscribe(children => {
-          const firstChild = children.find(child => !this._isItemDisabled(child));
+          const firstChild = children.find(child => !this._skipPredicateFn(child as T));
           if (!firstChild) {
             return;
           }
