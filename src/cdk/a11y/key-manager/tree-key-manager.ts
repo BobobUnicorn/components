@@ -22,13 +22,7 @@ import {
   ZERO,
 } from '@angular/cdk/keycodes';
 import {QueryList} from '@angular/core';
-import {
-  of as observableOf,
-  isObservable,
-  Observable,
-  Subject,
-  Subscription,
-} from 'rxjs';
+import {of as observableOf, isObservable, Observable, Subject, Subscription} from 'rxjs';
 import {debounceTime, filter, map, take, tap} from 'rxjs/operators';
 
 const DEFAULT_TYPEAHEAD_DEBOUNCE_INTERVAL_MS = 200;
@@ -148,6 +142,24 @@ export class TreeKeyManager<T extends TreeKeyManagerItem> {
     activationFollowsFocus,
     typeAheadDebounceInterval,
   }: TreeKeyManagerOptions<T>) {
+    // We allow for the items to be an array or Observable because, in some cases, the consumer may
+    // not have access to a QueryList of the items they want to manage (e.g. when the
+    // items aren't being collected via `ViewChildren` or `ContentChildren`).
+    if (items instanceof QueryList) {
+      this._items = items.toArray();
+      items.changes.subscribe((newItems: QueryList<T>) => {
+        this._items = newItems.toArray();
+        this._updateActiveItemIndex(this._items);
+      });
+    } else if (isObservable(items)) {
+      items.subscribe(newItems => {
+        this._items = newItems;
+        this._updateActiveItemIndex(newItems);
+      });
+    } else {
+      this._items = items;
+    }
+
     if (typeof skipPredicate !== 'undefined') {
       this._skipPredicateFn = skipPredicate;
     }
@@ -166,24 +178,6 @@ export class TreeKeyManager<T extends TreeKeyManagerItem> {
           ? typeAheadDebounceInterval
           : DEFAULT_TYPEAHEAD_DEBOUNCE_INTERVAL_MS,
       );
-    }
-
-    // We allow for the items to be an array or Observable because, in some cases, the consumer may
-    // not have access to a QueryList of the items they want to manage (e.g. when the
-    // items aren't being collected via `ViewChildren` or `ContentChildren`).
-    if (items instanceof QueryList) {
-      this._items = items.toArray();
-      items.changes.subscribe((newItems: QueryList<T>) => {
-        this._items = newItems.toArray();
-        this._updateActiveItemIndex(this._items);
-      });
-    } else if (isObservable(items)) {
-      items.subscribe(newItems => {
-        this._items = newItems;
-        this._updateActiveItemIndex(newItems);
-      });
-    } else {
-      this._items = items;
     }
   }
 
@@ -343,7 +337,7 @@ export class TreeKeyManager<T extends TreeKeyManagerItem> {
         tap(letter => this._pressedLetters.push(letter)),
         debounceTime(debounceInterval),
         filter(() => this._pressedLetters.length > 0),
-        map(() => this._pressedLetters.join('')),
+        map(() => this._pressedLetters.join('').toLocaleUpperCase()),
       )
       .subscribe(inputString => {
         // Start at 1 because we want to start searching at the item immediately
@@ -354,7 +348,7 @@ export class TreeKeyManager<T extends TreeKeyManagerItem> {
 
           if (
             !this._skipPredicateFn(item) &&
-            item.getLabel?.().toUpperCase().trim().indexOf(inputString) === 0
+            item.getLabel?.().toLocaleUpperCase().trim().indexOf(inputString) === 0
           ) {
             this._setActiveItem(index);
             break;
