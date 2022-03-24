@@ -557,6 +557,7 @@ export class CdkTree<T, K = T> implements AfterContentChecked, CollectionViewer,
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /**
    * Gets the direct children of a node; used for compatibility between the old tree and the
    * new tree.
@@ -637,9 +638,24 @@ export class CdkTree<T, K = T> implements AfterContentChecked, CollectionViewer,
     return group.indexOf(dataNode) + 1;
   }
 
+  /**
+    * For the given node, determine the size of the parent's child set.
+    *
+    * This is intended to be used for `aria-setsize`.
+    */
   _getSetSize(dataNode: T) {
     const group = this._getNodeGroup(dataNode);
     return group.length;
+  }
+
+  /**
+    * For the given node, determine the index (starting from 1) of the node in its parent's child set.
+    *
+    * This is intended to be used for `aria-posinset`.
+    */
+  _getPositionInSet(dataNode: T) {
+    const group = this._getNodeGroup(dataNode);
+    return group.indexOf(dataNode) + 1;
   }
 
   private _getAllDescendants(): Observable<T[]> {
@@ -843,10 +859,20 @@ export class CdkTreeNode<T, K = T> implements FocusableOption, OnDestroy, OnInit
     return this._tree._getLevel(this._data) ?? this._parentNodeAriaLevel;
   }
 
+  /**
+    * Determines the size of this node's parent's child set.
+    *
+    * This is intended to be used for `aria-setsize`.
+    */
   _getSetSize(): number {
     return this._tree._getSetSize(this._data);
   }
 
+  /**
+    * Determines the index (starting from 1) of this node in its parent's child set.
+    *
+    * This is intended to be used for `aria-posinset`.
+    */
   _getPositionInSet(): number {
     return this._tree._getPositionInSet(this._data);
   }
