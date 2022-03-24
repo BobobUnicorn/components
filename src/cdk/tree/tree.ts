@@ -556,8 +556,6 @@ export class CdkTree<T, K = T> implements AfterContentChecked, CollectionViewer,
     return this.treeControl?.getChildren ?? this.childrenAccessor;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
   /**
    * Gets the direct children of a node; used for compatibility between the old tree and the
    * new tree.
