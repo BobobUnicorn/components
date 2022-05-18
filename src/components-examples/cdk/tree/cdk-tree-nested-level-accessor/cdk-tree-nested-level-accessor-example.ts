@@ -1,16 +1,16 @@
 import {ArrayDataSource} from '@angular/cdk/collections';
 import {Component} from '@angular/core';
-import {FlatFoodNode, FLAT_DATA} from './tree-data';
+import {FlatFoodNode, FLAT_DATA} from '../tree-data';
 
 /**
- * @title Tree with flat nodes
+ * @title Tree with nested nodes
  */
 @Component({
-  selector: 'cdk-tree-flat-level-accessor-example',
-  templateUrl: 'cdk-tree-flat-level-accessor-example.html',
-  styleUrls: ['cdk-tree-flat-level-accessor-example.css'],
+  selector: 'cdk-tree-nested-level-accessor-example',
+  templateUrl: 'cdk-tree-nested-level-accessor-example.html',
+  styleUrls: ['cdk-tree-nested-level-accessor-example.css'],
 })
-export class CdkTreeFlatLevelAccessorExample {
+export class CdkTreeNestedLevelAccessorExample {
   levelAccessor = (dataNode: FlatFoodNode) => dataNode.level;
 
   dataSource = new ArrayDataSource(FLAT_DATA);
