@@ -60,6 +60,10 @@ function coerceObservable<T>(data: T | Observable<T>): Observable<T> {
   return data;
 }
 
+function isNotNullish<T>(val: T | null | undefined): val is T {
+  return val != null;
+}
+
 /**
  * CDK tree component that connects with a data source to retrieve data of type `T` and renders
  * dataNodes with hierarchy. Updates the dataNodes when new data is provided by the data source.
@@ -319,22 +323,6 @@ export class CdkTree<T, K = T> implements AfterContentChecked, CollectionViewer,
     parentData?: T,
   ) {
     this._dataNodes.next(data);
-
-    this._renderNodeChanges(data, dataDiffer, viewContainer, parentData);
-  }
-
-  /** Check for changes made in the data and render each change (node added/removed/moved). */
-  _renderNodeChanges(
-    data: readonly T[],
-    dataDiffer: IterableDiffer<T>,
-    viewContainer: ViewContainerRef,
-    parentData?: T,
-  ) {
-    const levelAccessor = this._getLevelAccessor();
-    if (levelAccessor && this.nodeType === 'nested' && !parentData) {
-      data = data.filter(data => levelAccessor(data) === 0);
-    }
-
     const changes = dataDiffer.diff(data);
     if (!changes) {
       return;
@@ -654,6 +642,22 @@ export class CdkTree<T, K = T> implements AfterContentChecked, CollectionViewer,
   _getPositionInSet(dataNode: T) {
     const group = this._getNodeGroup(dataNode);
     return group.indexOf(dataNode) + 1;
+  }
+
+  /**
+   * Adds the specified node component to the tree's internal registry.
+   *
+   * This primarily facilitates keyboard navigation.
+   */
+  _registerNode(node: CdkTreeNode<T, K>) {
+    this._nodes.value.set(this._trackExpansionKey(node.data), node);
+    this._nodes.next(this._nodes.value);
+  }
+
+  /** Removes the specified node component from the tree's internal registry. */
+  _unregisterNode(node: CdkTreeNode<T, K>) {
+    this._nodes.value.delete(this._trackExpansionKey(node.data));
+    this._nodes.next(this._nodes.value);
   }
 
   private _getAllDescendants(): Observable<T[]> {
