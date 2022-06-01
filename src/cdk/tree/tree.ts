@@ -915,9 +915,9 @@ export class CdkTreeNode<T, K = T> implements OnDestroy, OnInit, TreeKeyManagerI
   }
   set isExpanded(isExpanded: boolean) {
     if (isExpanded) {
-      this._tree.expand(this.data);
+      this.expand();
     } else {
-      this._tree.collapse(this.data);
+      this.collapse();
     }
   }
 
@@ -930,6 +930,10 @@ export class CdkTreeNode<T, K = T> implements OnDestroy, OnInit, TreeKeyManagerI
   /** This emits when the node has been programatically activated. */
   @Output()
   readonly activation: EventEmitter<T> = new EventEmitter<T>();
+
+  /** This emits when the node's expansion status has been changed. */
+  @Output()
+  readonly expandedChange: EventEmitter<boolean> = new EventEmitter<boolean>();
 
   /**
    * The most recently created `CdkTreeNode`. We save it in static variable so we can retrieve it
@@ -1026,11 +1030,13 @@ export class CdkTreeNode<T, K = T> implements OnDestroy, OnInit, TreeKeyManagerI
   /** Collapses this data node. Implemented for TreeKeyManagerItem. */
   collapse(): void {
     this._tree.collapse(this._data);
+    this.expandedChange.emit(this.isExpanded);
   }
 
   /** Expands this data node. Implemented for TreeKeyManagerItem. */
   expand(): void {
     this._tree.expand(this._data);
+    this.expandedChange.emit(this.isExpanded);
   }
 
   _setTabFocusable() {
