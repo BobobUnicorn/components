@@ -1,5 +1,6 @@
 import {ArrayDataSource} from '@angular/cdk/collections';
-import {Component} from '@angular/core';
+import {CdkTree} from '@angular/cdk/tree';
+import {Component, ViewChild} from '@angular/core';
 import {FlatFoodNode, FLAT_DATA} from '../tree-data';
 
 /**
@@ -11,6 +12,9 @@ import {FlatFoodNode, FLAT_DATA} from '../tree-data';
   styleUrls: ['cdk-tree-flat-level-accessor-example.css'],
 })
 export class CdkTreeFlatLevelAccessorExample {
+  @ViewChild(CdkTree)
+  tree: CdkTree<FlatFoodNode>;
+
   levelAccessor = (dataNode: FlatFoodNode) => dataNode.level;
 
   dataSource = new ArrayDataSource(FLAT_DATA);
@@ -32,7 +36,7 @@ export class CdkTreeFlatLevelAccessorExample {
   shouldRender(node: FlatFoodNode) {
     let parent = this.getParentNode(node);
     while (parent) {
-      if (!parent.isExpanded) {
+      if (!this.tree?.isExpanded(parent)) {
         return false;
       }
       parent = this.getParentNode(parent);
