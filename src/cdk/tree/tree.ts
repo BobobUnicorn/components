@@ -94,10 +94,10 @@ export class CdkTree<T, K = T> implements AfterContentChecked, CollectionViewer,
   private _dataSubscription: Subscription | null;
 
   /** Level of nodes */
-  private _levels: Map<T, number> = new Map<T, number>();
+  private _levels: Map<K, number> = new Map<K, number>();
 
   /** The immediate parents for a node. This is `null` if there is no parent. */
-  private _parents: Map<T, T | null> = new Map<T, T | null>();
+  private _parents: Map<K, T | null> = new Map<K, T | null>();
 
   /**
    * The internal node groupings for each node; we use this, primarily for flattened trees, to
@@ -203,9 +203,6 @@ export class CdkTree<T, K = T> implements AfterContentChecked, CollectionViewer,
   private _nodes: BehaviorSubject<Map<K, CdkTreeNode<T, K>>> = new BehaviorSubject(
     new Map<K, CdkTreeNode<T, K>>(),
   );
-
-  /** The mapping between data nodes and the parent node. `null` if no parent. */
-  private _parents: Map<K, T | null> = new Map<K, T | null>();
 
   constructor(private _differs: IterableDiffers, private _changeDetectorRef: ChangeDetectorRef) {}
 
@@ -354,8 +351,8 @@ export class CdkTree<T, K = T> implements AfterContentChecked, CollectionViewer,
         } else if (currentIndex == null) {
           viewContainer.remove(adjustedPreviousIndex!);
           const group = this._getNodeGroup(item.item);
-          this._levels.delete(item.item);
-          this._parents.delete(item.item);
+          this._levels.delete(this._trackExpansionKey(item.item));
+          this._parents.delete(this._trackExpansionKey(item.item));
           group.splice(group.indexOf(item.item), 1);
         } else {
           const view = viewContainer.get(adjustedPreviousIndex!);
@@ -404,21 +401,24 @@ export class CdkTree<T, K = T> implements AfterContentChecked, CollectionViewer,
     const levelAccessor = this._getLevelAccessor();
     if (levelAccessor) {
       context.level = levelAccessor(nodeData);
-    } else if (typeof parentData !== 'undefined' && this._levels.has(parentData)) {
-      context.level = this._levels.get(parentData)! + 1;
+    } else if (
+      typeof parentData !== 'undefined' &&
+      this._levels.has(this._trackExpansionKey(parentData))
+    ) {
+      context.level = this._levels.get(this._trackExpansionKey(parentData))! + 1;
     } else {
       context.level = 0;
     }
-    this._levels.set(nodeData, context.level);
+    this._levels.set(this._trackExpansionKey(nodeData), context.level);
     const parent = parentData ?? this._findParentForNode(nodeData, index);
-    this._parents.set(nodeData, parent);
+    this._parents.set(this._trackExpansionKey(nodeData), parent);
 
     // Determine where to insert this new node into the group, then insert it.
     // We do this by looking at the previous node in our flattened node list. If it's in the same
     // group, we place the current node after. Otherwise, we place it at the start of the group.
     const currentGroup = this._groups.get(context.level) ?? new Map<T | null, T[]>();
     const group = currentGroup.get(parent) ?? [];
-    const previousNode = this._dataNodes?.[index - 1];
+    const previousNode = this._dataNodes.value?.[index - 1];
     const groupInsertionIndex = (previousNode && group.indexOf(previousNode) + 1) ?? 0;
     group.splice(groupInsertionIndex, 0, nodeData);
     currentGroup.set(parent, group);
@@ -627,13 +627,13 @@ export class CdkTree<T, K = T> implements AfterContentChecked, CollectionViewer,
     this._nodes.next(this._nodes.value);
   }
 
+  /**
+   * For the given node, determine the level where this node appears in the tree.
+   *
+   * This is intended to be used for `aria-level` but is 0-indexed.
+   */
   _getLevel(node: T) {
-    return this._levels.get(node);
-  }
-
-  _getPositionInSet(dataNode: T) {
-    const group = this._getNodeGroup(dataNode);
-    return group.indexOf(dataNode) + 1;
+    return this._levels.get(this._trackExpansionKey(node));
   }
 
   /**
@@ -752,8 +752,8 @@ export class CdkTree<T, K = T> implements AfterContentChecked, CollectionViewer,
   }
 
   private _getNodeGroup(node: T) {
-    const level = this._levels.get(node);
-    const parent = this._parents.get(node);
+    const level = this._levels.get(this._trackExpansionKey(node));
+    const parent = this._parents.get(this._trackExpansionKey(node));
     const group = this._groups.get(level ?? 0)?.get(parent ?? null);
     return group ?? [node];
   }
@@ -765,10 +765,10 @@ export class CdkTree<T, K = T> implements AfterContentChecked, CollectionViewer,
     if (!this._dataNodes) {
       return null;
     }
-    const currentLevel = this._levels.get(node) ?? 0;
+    const currentLevel = this._levels.get(this._trackExpansionKey(node)) ?? 0;
     for (let parentIndex = index; parentIndex >= 0; parentIndex--) {
-      const parentNode = this._dataNodes[parentIndex];
-      const parentLevel = this._levels.get(parentNode) ?? 0;
+      const parentNode = this._dataNodes.value[parentIndex];
+      const parentLevel = this._levels.get(this._trackExpansionKey(parentNode)) ?? 0;
 
       if (parentLevel < currentLevel) {
         return parentNode;
