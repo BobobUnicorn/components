@@ -369,6 +369,22 @@ export class CdkTree<T, K = T> implements AfterContentChecked, CollectionViewer,
     parentData?: T,
   ) {
     this._dataNodes.next(data);
+
+    this._renderNodeChanges(data, dataDiffer, viewContainer, parentData);
+  }
+
+  /** Check for changes made in the data and render each change (node added/removed/moved). */
+  _renderNodeChanges(
+    data: readonly T[],
+    dataDiffer: IterableDiffer<T>,
+    viewContainer: ViewContainerRef,
+    parentData?: T,
+  ) {
+    const levelAccessor = this._getLevelAccessor();
+    if (levelAccessor && this.nodeType === 'nested' && !parentData) {
+      data = data.filter(data => levelAccessor(data) === 0);
+    }
+
     const changes = dataDiffer.diff(data);
     if (!changes) {
       return;
