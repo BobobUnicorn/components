@@ -646,22 +646,6 @@ export class CdkTree<T, K = T> implements AfterContentChecked, CollectionViewer,
   }
 
   /**
-   * Adds the specified node component to the tree's internal registry.
-   *
-   * This primarily facilitates keyboard navigation.
-   */
-  _registerNode(node: CdkTreeNode<T, K>) {
-    this._nodes.value.set(this._trackExpansionKey(node.data), node);
-    this._nodes.next(this._nodes.value);
-  }
-
-  /** Removes the specified node component from the tree's internal registry. */
-  _unregisterNode(node: CdkTreeNode<T, K>) {
-    this._nodes.value.delete(this._trackExpansionKey(node.data));
-    this._nodes.next(this._nodes.value);
-  }
-
-  /**
    * For the given node, determine the level where this node appears in the tree.
    *
    * This is intended to be used for `aria-level` but is 0-indexed.
@@ -708,7 +692,7 @@ export class CdkTree<T, K = T> implements AfterContentChecked, CollectionViewer,
 
   /** Given a CdkTreeNode, gets the node that renders that node's parent's data. */
   _getNodeParent(node: CdkTreeNode<T, K>) {
-    const parent = this._parents.get(node.data);
+    const parent = this._parents.get(this._trackExpansionKey(node.data));
     return parent && this._nodes.value.get(this._trackExpansionKey(parent));
   }
 
@@ -814,22 +798,6 @@ export class CdkTree<T, K = T> implements AfterContentChecked, CollectionViewer,
     //   the return type.
     // - if it's not, then K will be defaulted to T.
     return this.expansionKey?.(dataNode) ?? (dataNode as unknown as K);
-  }
-
-  private _flattenChildren(nodes: readonly T[]): Observable<readonly T[]> {
-    // If we're using TreeControl or levelAccessor, we don't need to manually
-    // flatten things here.
-    if (!this.childrenAccessor) {
-      return observableOf(nodes);
-    } else {
-      return observableOf(...nodes).pipe(
-        concatMap(node => concat(observableOf([node]), this._getAllChildrenRecursively(node))),
-        reduce((results, nodes) => {
-          results.push(...nodes);
-          return results;
-        }, [] as T[]),
-      );
-    }
   }
 
   private _getNodeGroup(node: T) {
